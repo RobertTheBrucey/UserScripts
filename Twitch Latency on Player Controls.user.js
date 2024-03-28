@@ -51,56 +51,62 @@ var checkboxHTML = `<div id='userScript_latencyDiv'>0:00</div>\
   <input id='userScript_latencyToggle' type=\"checkbox\" checked>\
 </div>`;
 
-(function() {
+(function () {
     'use strict';
 
     window.addEventListener('load', function () {
 
         // we have to open the video stats in order for Twitch to generate them.
-        setTimeout(function(){
+        setTimeout(function () {
             console.log("Adding Reset Checkbox");
             var control_groups = document.querySelectorAll(".player-controls__right-control-group")
-            //control_groups[control_groups.length-1].insertAdjacentHTML("afterbegin",checkboxHTML); // Twitch Emote extension messes with control groups.
-            control_groups[0].insertAdjacentHTML("afterbegin",checkboxHTML);
+            control_groups[0].insertAdjacentHTML("afterbegin", checkboxHTML);
 
             console.log("Enabling Latency Monitoring");
+            //Open stream settings
             document.querySelector("button[data-a-target='player-settings-button']").click();
 
-            setTimeout(function(){
+            //Select Advanced sub-menu
+            setTimeout(function () {
                 document.querySelector("button[data-a-target='player-settings-menu-item-advanced']").click();
+            }, 1000);
 
-
+            //Open Video Stats
+            setTimeout(function () {
                 var selectors = document.querySelectorAll("input[data-a-target='tw-toggle']");
                 var selector;
                 for (var x = 0; x < selectors.length; x++) {
                     selector = selectors[x];
-                    if (selector.parentNode.parentNode.querySelector("label").innerHTML === "Video Stats"){
-                        selector.click();
-                    }
+                    try {
+                        if (selector.parentNode.parentNode.querySelector("label").innerHTML === "Video Stats") {
+                            selector.click();
+                            break;
+                        }
+                    } catch (error) { }
                 }
 
-                // hide video stats window
+                // Hide Video Stats window
                 document.querySelector("div[data-a-target='player-overlay-video-stats']").style.display = "none";
 
                 console.log("Latency Monitoring Active");
 
-                setInterval(function(){
+                setInterval(function () {
                     var userScript_latency = document.querySelector("p[aria-label='Latency To Broadcaster']").innerText;
-                    if (initLatency == 0) {initLatency = parseFloat(userScript_latency);}
-                    else if (parseFloat(userScript_latency) < initLatency) {initLatency = parseFloat(userScript_latency);}
+                    if (initLatency == 0) { initLatency = parseFloat(userScript_latency); }
+                    else if (parseFloat(userScript_latency) < initLatency) { initLatency = parseFloat(userScript_latency); }
                     if (document.getElementById("userScript_latencyDiv")) {
                         document.getElementById("userScript_latencyDiv").innerText = userScript_latency;
                     } else {
                         document.querySelector("div[data-a-target='player-overlay-video-stats']").style.display = "none";
                         document.querySelector(".player-controls__right-control-group").insertAdjacentHTML("afterbegin", "<div id='userScript_latencyDiv'>0:00</div>");
                     }
-                    if ((parseFloat(userScript_latency) - initLatency) > triggerLatency && document.getElementById("userScript_latencyToggle").checked) {
+                    if ((parseFloat(userScript_latency) - initLatency) > 2 && document.getElementById("userScript_latencyToggle").checked) {
                         console.log("Resetting stream due to latency");
                         document.querySelector("button[data-a-target='player-play-pause-button']").click();
                         document.querySelector("button[data-a-target='player-play-pause-button']").click();
                         initLatency = 0;
                     }
-                }, 3000);
+                }, 2000);
 
                 document.querySelector("button[data-a-target='player-settings-button']").click();
             }, 1000);
